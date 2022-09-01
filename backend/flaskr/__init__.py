@@ -33,10 +33,13 @@ def create_app(test_config=None):
 
     @app.route("/categories")
     def get_all_categories():
-        categories = list(map(Category.format, Category.query.all()))
+        categories = Category.query.all()
+        catdict = {}
+        for category in categories:
+            catdict[category.id] = category.type
         result = {
             "success": True,
-            "categories": categories
+            "categories": catdict
         }
         return jsonify(result)
 
@@ -44,14 +47,17 @@ def create_app(test_config=None):
     def get_questions():
         questions = Question.query.order_by(Question.id).all()
         cur_questions = add_pagination(request, questions)
-        categories = list(map(Category.format, Category.query.all()))
+        categories = Category.query.all()
+        catdict = {}
+        for category in categories:
+            catdict[category.id] = category.type
 
         if len(cur_questions) == 0:
             abort(404)
 
         return jsonify({
             'success': True,
-            'categories': categories,
+            'categories': catdict,
             'questions': cur_questions,
             'total_questions': Question.query.count(),
             'current_category': None,
@@ -134,7 +140,10 @@ def create_app(test_config=None):
         cur_page = 1
         if request.args.get('page'):
             cur_page = int(request.args.get('page'))
-        categories = list(map(Category.format, Category.query.all()))
+        categories = Category.query.all()
+        catdict = {}
+        for category in categories:
+            catdict[category.id] = category.type
         query = Question.query.filter_by(
             category=category_id).paginate(
             cur_page, QUESTIONS_PER_PAGE, False)
@@ -144,7 +153,7 @@ def create_app(test_config=None):
                 "success": True,
                 "questions": questions,
                 "total_questions": query.total,
-                "categories": categories,
+                "categories": catdict,
                 "current_category": Category.format(cur_category),
             })
         abort(404)
