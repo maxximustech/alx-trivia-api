@@ -149,15 +149,14 @@ POST `/questions`
 }
 ```
 
-POST `/searchQuestions`
+POST `/questions`
 - Return questions that match the search keyword according to the page number
 - Request Arguments: Page Number
-- Request Body: search_data, page (Get method - Optional)
-- Returns: Success status, list of questions, total count of all questions and current category.
+- Request Body: searchTerm, page (Get method - Optional)
+- Returns: Success status, list of questions, total count of all questions.
 
 ```json
 {
-  "current_category":null,
   "questions":[
     {"answer":"Lake Victoria","category":3,"difficulty":2,"id":13,"question":"What is the largest lake in Africa?"}
   ],

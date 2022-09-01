@@ -85,24 +85,37 @@ def create_app(test_config=None):
 
     @app.route("/questions", methods=['POST'])
     def post_question():
-        try:
-            body = request.get_json()
-
-            question = body.get('question', None)
-            answer = body.get('answer', None)
-            category = body.get('category', None)
-            difficulty = body.get('difficulty', None)
-
-            question = Question(question=question, answer=answer, category=category, difficulty=difficulty)
-            question.insert()
-
+        body = request.get_json()
+        if body.get('searchTerm'):
+            keyword = body.get('searchTerm')
+            query = Question.query.filter(
+                Question.question.ilike(f'%{keyword}%')).all()
+            if len(query) == 0:
+                abort(404)
+            questions = add_pagination(request, query)
             return jsonify({
                 'success': True,
-                'created': question.id,
-                'total_questions': Question.query.count()
+                'questions': questions,
+                'total_questions': len(query)
             })
+        elif body.get('question') and body.get('answer'):
+            try:
+                question = body.get('question', None)
+                answer = body.get('answer', None)
+                category = body.get('category', None)
+                difficulty = body.get('difficulty', None)
 
-        except:
+                question = Question(question=question, answer=answer, category=category, difficulty=difficulty)
+                question.insert()
+
+                return jsonify({
+                    'success': True,
+                    'created': question.id,
+                    'total_questions': Question.query.count()
+                })
+            except:
+                abort(422)
+        else:
             abort(422)
 
     @app.route("/searchQuestions", methods=['POST'])
@@ -123,6 +136,7 @@ def create_app(test_config=None):
                     False)
                 questions = list(map(Question.format, query.items))
                 if len(questions) > 0:
+                    print(questions)
                     return jsonify({
                         "success": True,
                         "questions": questions,
@@ -165,29 +179,35 @@ def create_app(test_config=None):
             if (('quiz_category' in jsonData
                  and 'id' in jsonData['quiz_category'])
                     and 'previous_questions' in jsonData):
-                query = Question.query.filter_by(
-                    category=jsonData['quiz_category']['id']
-                ).filter(
-                    Question.id.notin_(jsonData["previous_questions"])
-                ).all()
-                question_count = len(query)
-                if question_count > 0:
-                    result = {
-                        "success": True,
-                        "question": Question.format(
-                            query[random.randrange(
-                                0,
-                                question_count
-                            )]
-                        )
-                    }
+                if jsonData['quiz_category']['id'] > 0:
+                    query = Question.query.filter_by(
+                        category=jsonData['quiz_category']['id']
+                    ).filter(
+                        Question.id.notin_(jsonData["previous_questions"])
+                    ).all()
                 else:
-                    result = {
-                        "success": True,
-                        "question": None
-                    }
-                return jsonify(result)
-            abort(404)
+                    query = Question.query.filter(
+                        Question.id.notin_(jsonData["previous_questions"])
+                    ).all()
+            else:
+                query = Question.query.all()
+            question_count = len(query)
+            if question_count > 0:
+                result = {
+                    "success": True,
+                    "question": Question.format(
+                        query[random.randrange(
+                            0,
+                            question_count
+                        )]
+                    )
+                }
+            else:
+                result = {
+                    "success": True,
+                    "question": None
+                }
+            return jsonify(result)
         abort(422)
 
     @app.errorhandler(400)

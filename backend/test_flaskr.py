@@ -82,7 +82,7 @@ class TriviaTestCase(unittest.TestCase):
         post_data = {
             'searchTerm': 'lake',
         }
-        res = self.client().post('/searchQuestions', json=post_data)
+        res = self.client().post('/questions', json=post_data)
         data = json.loads(res.data)
         self.assertEqual(res.status_code, 200)
         self.assertEqual(data["success"], True)
@@ -93,7 +93,7 @@ class TriviaTestCase(unittest.TestCase):
         post_data = {
             'searchTerm': 'e',
         }
-        res = self.client().post('/searchQuestions?page=1000', json=post_data)
+        res = self.client().post('/questions?page=1000', json=post_data)
         data = json.loads(res.data)
         self.assertEqual(res.status_code, 404)
         self.assertEqual(data["success"], False)
